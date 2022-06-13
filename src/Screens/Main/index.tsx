@@ -18,7 +18,7 @@ const MainScreen = () => {
 
   const name = localStorage.getItem("name")
   const salary = localStorage.getItem("salary")
-  const salaryInt = parseInt(salary as any)
+  const salaryInt = parseInt(salary as string);
   const type = localStorage.getItem("type")
   const paymentDay = localStorage.getItem("paymentDay")
 
@@ -29,6 +29,19 @@ const MainScreen = () => {
   const [money, setMoney] = useState<number>(0);
   const [moneySpending, setMoneySpending] = useState<number>(0);
   const [transactions, setTransactions] = useState<any[]>([]);
+
+
+  useEffect(() => {
+    const feathPayment = async () => {
+      let day: any = new Date();
+      day = day.getDate();
+      if(day === paymentDay){
+        const user = await UserRepository.getUser(name as string);
+        await UserRepository.getPayment(user.data._id, salaryInt);
+      }
+    }
+    feathPayment();
+  }, [])
   
   useEffect(() => {
     const fetchData = async () => {
@@ -253,7 +266,6 @@ const MainScreen = () => {
                       ): (
                         <h1>U$ <span className='text-red-500'>{item.money}</span></h1>
                       )}
-                  
                     </div>
                   </div>
                   <hr className='mt-2 w-[90%] m-auto'/>

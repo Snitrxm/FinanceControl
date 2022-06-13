@@ -3,11 +3,11 @@ import {
   Button,
   Input, Modal, ModalBody,
   ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay,
-  useDisclosure, Icon, RadioGroup, Stack
+  useDisclosure, Icon, RadioGroup
 } from '@chakra-ui/react';
-import { useEffect, useState } from 'react';
-import { successMessageChangeSalary } from "../../SuccessMessages";
-import { errorMessageChangeSalary } from "../../ErrorMessages";
+import { useState } from 'react';
+import { successMessageChangeSalary, successMessageResetBalance } from "../../SuccessMessages";
+import { errorMessageChangeSalary, errorResetBalance } from "../../ErrorMessages";
 import { ToastContainer } from "react-toastify";
 import UserRepository from "../../Repositories/UserRepository";
 import LocalStorageRepository from "../../Repositories/LocalstorageRepository";
@@ -16,7 +16,7 @@ import { BsTrash } from 'react-icons/bs';
 import { errorDeletingUser } from '../../ErrorMessages';
 import TransactionRepository from "../../Repositories/TransactionsRepository";
 import { BsCoin } from 'react-icons/bs'
-import { Radio } from "flowbite-react";
+import { GrPowerReset } from 'react-icons/gr'
 
 const ConfigScreen = () => {
   const [newSalary, setNewSalary] = useState<string>('');
@@ -26,6 +26,7 @@ const ConfigScreen = () => {
   const { isOpen: openNewSalaryModal, onOpen: onOpenNewSalarytModal, onClose: closeNewSalaryModal } = useDisclosure();
   const { isOpen: openDeleteModal, onOpen: onOpenDeletetModal, onClose: closeDeleteModal } = useDisclosure();
   const { isOpen: openCoinTypeModal, onOpen: onOpenCoinTypetModal, onClose: closeCoinTypeModal } = useDisclosure();
+  const { isOpen: openResetBalanceModal, onOpen: onOpenResetBalanceModal, onClose: closeResetBalanceModal } = useDisclosure();
 
   const name = localStorage.getItem("name");
   
@@ -61,6 +62,17 @@ const ConfigScreen = () => {
 
   const handleChangeCoinType = async () => {
     console.log(coinType);
+  }
+
+  const handleResetBalance = async () => {
+    const user = await UserRepository.getUser(name as string);
+    const response = await UserRepository.resetBalance(user.data._id as string);
+    await TransactionRepository.deleteAllTransactionByUser(user.data._id as string);
+    if(response.data){
+      successMessageResetBalance();
+    }else{
+      errorResetBalance();
+    }
   }
 
   return (
@@ -106,7 +118,7 @@ const ConfigScreen = () => {
       <Modal isOpen={openCoinTypeModal} onClose={closeCoinTypeModal} size="xs">
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>How much is your new salary?</ModalHeader>
+          <ModalHeader>What type of coin you will chose?</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
             <RadioGroup value={coinType} onChange={setCoinType} name="coinType">
@@ -119,6 +131,27 @@ const ConfigScreen = () => {
               handleChangeCoinType();
             }}>
               Change Coin Type
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      <Modal isOpen={openResetBalanceModal} onClose={closeResetBalanceModal} size="xs">
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Are you sure?</ModalHeader>
+          <ModalCloseButton />
+          <ModalFooter>
+            <Button colorScheme='red' mr={3} onClick={() => {
+              closeResetBalanceModal();
+            }}>
+              No
+            </Button>
+            <Button colorScheme='whatsapp' mr={3} onClick={() => {
+              closeResetBalanceModal();
+              handleResetBalance();
+            }}>
+              Yes
             </Button>
           </ModalFooter>
         </ModalContent>
@@ -149,6 +182,14 @@ const ConfigScreen = () => {
                   <Icon as={BsCoin}></Icon>
                 </div>
                 <h1 className='font-bold text-sm'>Change Coin Type</h1>
+              </div>
+          </button>
+          <button onClick={onOpenResetBalanceModal}>
+              <div className='flex flex-col items-center gap-1'>
+                <div className='bg-slate-200 h-16 w-16 rounded-full flex justify-center items-center cursor-pointer'>
+                  <Icon as={GrPowerReset}></Icon>
+                </div>
+                <h1 className='font-bold text-sm'>Reset Balance</h1>
               </div>
           </button>
           <button onClick={onOpenDeletetModal}>
