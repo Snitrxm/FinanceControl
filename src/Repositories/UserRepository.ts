@@ -9,7 +9,7 @@ interface IUserRepository {
   syncMoneySpending(_id: string, moneySpending: number): Promise<any>
   changeSalary(_id: string, salary: number): Promise<any>
   resetBalance(_id: string): Promise<any>
-  getPayment(_id: string, salary: number): Promise<any>
+  getPayment(_id: string, total: number): Promise<any>
 }
 
 const UserRepository: IUserRepository = {
@@ -21,7 +21,7 @@ const UserRepository: IUserRepository = {
   syncMoneySpending: (_id: string, moneySpending:number): Promise<any> => Api.post('/user/syncmoneyspending', { _id, moneySpending }),
   changeSalary: (_id: string, salary: number): Promise<any> => Api.put('/user/changesalary', { _id, salary }),
   resetBalance: (_id: string): Promise<any> => Api.put('/user/resetbalance', { _id }),
-  getPayment: (_id: string, salary: number) => Api.put('/user/getpayment', { _id, salary}),
+  getPayment: (_id: string, total: number) => Api.put('/user/getpayment', { _id, total}),
 }
 
 export default UserRepository;

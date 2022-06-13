@@ -11,6 +11,7 @@ import { HiOutlineFolderAdd } from 'react-icons/hi';
 import { BiShoppingBag, BiMoney } from 'react-icons/bi';
 import { Navigate } from 'react-router-dom';
 import TransactionRepository from '../../Repositories/TransactionsRepository';
+import LocalStorageRepository from '../../Repositories/LocalstorageRepository';
 
 const MainScreen = () => {
   const { isOpen: openDepositModal, onOpen: onOpenDepositModal, onClose: closeDepositModal } = useDisclosure();
@@ -21,6 +22,7 @@ const MainScreen = () => {
   const salaryInt = parseInt(salary as string);
   const type = localStorage.getItem("type")
   const paymentDay = localStorage.getItem("paymentDay")
+  const paymentDayInt = parseInt(paymentDay as string)
 
   const [deposit, setDeposit] = useState<string>('');
   const [depositType, setDepositType] = useState<string>('');
@@ -29,41 +31,41 @@ const MainScreen = () => {
   const [money, setMoney] = useState<number>(0);
   const [moneySpending, setMoneySpending] = useState<number>(0);
   const [transactions, setTransactions] = useState<any[]>([]);
+  const [counter, setCounter ] = useState<number>(0);
+  const [getPaymented, setGetPayement] = useState<boolean>(false);
 
-
-  useEffect(() => {
-    const feathPayment = async () => {
-      let day: any = new Date();
-      day = day.getDate();
-      if(day === paymentDay){
-        const user = await UserRepository.getUser(name as string);
-        await UserRepository.getPayment(user.data._id, salaryInt);
-      }
-    }
-    feathPayment();
-  }, [])
+  
   
   useEffect(() => {
     const fetchData = async () => {
       const userExist = await UserRepository.checkIfUserExists(name as string);
       if(userExist.data === true){
-        console.log("Already in database!");
+        console.log("Already in database!");  
       }else{
-        await UserRepository.createUser(name as string ,salaryInt as number, type as string, paymentDay as string);
-        console.log("User not in database yet, creating...");
+        if(!name || !salary || !type || !paymentDay){
+          await UserRepository.deleteUser(document.cookie);
+          await TransactionRepository.deleteAllTransactionByUser(document.cookie);
+          window.location.href = "/";
+        }else{
+          const user = await UserRepository.createUser(name as string ,salaryInt as number, type as string, paymentDay as string);
+          document.cookie = user.data._id;
+          console.log("User not in database yet, creating...");
+        }
+        
       }
     }
     fetchData();
-  },[])
+  },[name, salary, type, paymentDay, salaryInt]);
 
   useEffect(() => {
     const fetchMoney = async () => {
       let user = await UserRepository.getUser(name as string);
       setMoney(user.data.money);
       setMoneySpending(user.data.moneySpending);
+      console.log("A")
     }
     fetchMoney();
-  }, [])
+  }, [getPaymented, name])
   
   useEffect((): any => {
     const fetch = async () => {
@@ -90,6 +92,29 @@ const MainScreen = () => {
     }
     getAllTransactionsByUser();
   }, [money, name])
+
+  // useEffect(() => {
+  //   const fetchPayment = async () => {
+  //     let day: any = new Date();
+  //     day = day.getDate();
+  //     if(day === paymentDayInt){
+  //       if(counter === 1){
+  //         console.log("ja pagou")
+  //       }else{
+  //         const user = await UserRepository.getUser(name as string);
+  //         const total = user.data.money + salaryInt;
+  //         const r = await UserRepository.getPayment(user.data._id, total);
+  //         setGetPayement(true);
+  //         console.log(r);
+  //         setCounter(1);
+  //         // const userId = user.data._id;
+  //         // await TransactionRepository.deposit(salaryInt, "WON", "Salary", userId);
+  //       }
+  //     }
+  //   }
+  //   fetchPayment();
+  // }, []);
+
 
   const addSalary = async () => {
     const salaryInt = parseInt(salary as any);
