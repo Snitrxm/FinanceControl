@@ -1,10 +1,17 @@
 import { Button, Input } from '@chakra-ui/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 const QuestionDay = () => {
   const [paymentDay, setPaymentDay] = useState('');
+  const paymentDayStorage = localStorage.getItem('paymentDay');
+
+  useEffect(() => {
+    if (paymentDayStorage) {
+      window.location.href = '/index';
+    }
+  },[])
 
   const errorMessage = () => {
     toast.error('Please enter a date', {

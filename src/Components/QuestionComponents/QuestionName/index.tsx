@@ -2,6 +2,8 @@ import { Button, Input } from '@chakra-ui/react';
 import { useState } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { addDoc, collection, getDocs } from '@firebase/firestore';
+import { db } from '../../../firebaseConfig';
 
 const QuestionName = () => {
   const [name, setName ] = useState('');
@@ -17,10 +19,35 @@ const QuestionName = () => {
     });
   };
 
-  const handleNextQuestion = () => {
+  const alreadyExistNameError = () => {
+    toast.error('Name already taken', {
+      position: "top-right",
+      autoClose: 5000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+    });
+  };
+
+  const usersCollection = collection(db, 'users');  
+  const handleNextQuestion = async () => {
     if(name){
-      localStorage.setItem("name", name);
-      window.location.reload();
+      const users = await getDocs(usersCollection);
+      const data = users.docs.map((user) => ({...user.data()}));
+      if(data && data.length === 0){
+        localStorage.setItem("name", name);
+        window.location.reload();
+      }
+      data.map(async (user) => {
+        if(user.name == name){
+          alreadyExistNameError();
+        }else{
+          localStorage.setItem("name", name);
+          window.location.reload();
+        }
+      })
     }else{
       errorMessage();
     }
