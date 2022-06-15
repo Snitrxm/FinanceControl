@@ -3,7 +3,6 @@ import { collection, onSnapshot, query, where } from '@firebase/firestore';
 import { useEffect, useState } from 'react';
 import { db } from '../../firebaseConfig';
 
-
 const HistoryScreen = () => {
   const historyCollection = collection(db, 'transactions');
   const [history, setHistory] = useState<any>([]);

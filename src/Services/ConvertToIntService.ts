@@ -1,4 +1,4 @@
-class ConvertToIntService {
+export class ConvertToIntService {
   constructor(){
     //
   }
@@ -7,5 +7,3 @@ class ConvertToIntService {
     return parseInt(value, 10);
   }
 }
-
-export default ConvertToIntService;

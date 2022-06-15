@@ -1,55 +1,27 @@
 import { Button, Input } from '@chakra-ui/react';
 import { useState } from 'react';
-import { ToastContainer, toast } from 'react-toastify';
+import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { addDoc, collection, getDocs } from '@firebase/firestore';
-import { db } from '../../../firebaseConfig';
+import UserRepository from '../../../Repositories/UserRepository';
+import LocalStorageRepository from '../../../Repositories/LocalstorageRepository';
+import { alreadyExistNameError } from '../../../ErrorMessages';
+import { errorFillNameInput } from '../../../ErrorMessages';
+
 
 const QuestionName = () => {
   const [name, setName ] = useState('');
-  const errorMessage = () => {
-    toast.error('Please enter your name', {
-      position: "top-right",
-      autoClose: 5000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
-    });
-  };
-
-  const alreadyExistNameError = () => {
-    toast.error('Name already taken', {
-      position: "top-right",
-      autoClose: 5000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
-    });
-  };
-
-  const usersCollection = collection(db, 'users');  
+  
   const handleNextQuestion = async () => {
     if(name){
-      const users = await getDocs(usersCollection);
-      const data = users.docs.map((user) => ({...user.data()}));
-      if(data && data.length === 0){
-        localStorage.setItem("name", name);
+      const response = await UserRepository.checkIfUserExists(name);
+      if(response.data === true){
+        alreadyExistNameError();
+      }else{
+        await LocalStorageRepository.set("name", name);
         window.location.reload();
       }
-      data.map(async (user) => {
-        if(user.name == name){
-          alreadyExistNameError();
-        }else{
-          localStorage.setItem("name", name);
-          window.location.reload();
-        }
-      })
     }else{
-      errorMessage();
+      errorFillNameInput();
     }
   }
 
@@ -63,10 +35,8 @@ const QuestionName = () => {
           <Button colorScheme="whatsapp" onClick={handleNextQuestion}>Next Question</Button>
         </div>
       </div>
-    </>
-    
+    </> 
   )
-
 }
 
 export default QuestionName;

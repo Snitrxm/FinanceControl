@@ -1,13 +1,14 @@
 import {
-  Button,
-  Input, Modal, ModalBody,
+  Button, Icon, Input, Modal, ModalBody,
   ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, useDisclosure
 } from '@chakra-ui/react';
-import { addDoc, collection, query, where, onSnapshot } from '@firebase/firestore';
+import { addDoc, collection } from '@firebase/firestore';
 import { useEffect, useState } from 'react';
+import { BsGear } from 'react-icons/bs';
 import { ToastContainer } from 'react-toastify';
 import { errorMessageDeposit, errorMessageWithdraw } from '../../ErrorMessages';
 import { db } from '../../firebaseConfig';
+import UserRepository from '../../Repositories/UserRepository';
 
 const MainScreen = () => {
   const { isOpen: openDepositModal, onOpen: onOpenDepositModal, onClose: closeDepositModal } = useDisclosure();
@@ -25,24 +26,18 @@ const MainScreen = () => {
   const [depositType, setDepositType] = useState<string>('');
   const [withdraw, setWithdraw] = useState<string>('');
   const [withdrawType, setWithdrawType] = useState<string>('');
-  const usersCollection = collection(db, 'users');
   const historyCollection = collection(db, 'transactions');
   
   useEffect(() => {
-    const addUsers = async () => {
-      const q = await query(usersCollection, where('name', '==', name));
-      onSnapshot(q, async (snapshot) => {
-        if(snapshot.docs.length === 0){
-          console.log("Nao tem no banco de dados");
-          await addDoc(usersCollection, {name: name, salary: salaryInt, type: type, paymentDay: paymentDayInt})
-        }else{
-          snapshot.docs.forEach(doc => {
-            console.log("Ja tem no banco de dados!")
-          })
-        }
-      })
+    const fetchData = async () => {
+      const userExist = await UserRepository.checkIfUserExists(name as string);
+      if(userExist.data === true){
+        console.log("Already in database!");
+      }else{
+        await UserRepository.createUser(name as string ,salaryInt as number, type as string, paymentDay as string);
+      }
     }
-    addUsers()
+    fetchData();
   },[])
 
 
@@ -94,10 +89,6 @@ const MainScreen = () => {
     }else{
       errorMessageWithdraw();
     }
-  }
-
-  const handleSeeHistory = () => {
-    window.location.href = '/history'
   }
 
   return (
@@ -158,10 +149,13 @@ const MainScreen = () => {
           <h1 className='text-white text-2xl font-bold'>I Have { money } U$</h1>
         </nav>
         <div className='flex flex-col items-center mt-10 gap-8'>
-          <button className='border border-green-500 px-10 py-5 text-xl w-48 hover:bg-green-500 transition-colors hover:text-white' onClick={onOpenDepositModal}>Won</button>
-          <button className='border border-red-500 px-10 py-5 text-xl w-48 hover:bg-red-500 transition-colors hover:text-white' onClick={onOpenWithdrawModal}>Loss</button>
-          <button className='border border-blue-500 px-10 py-5 text-xl w-48 hover:bg-blue-500 transition-colors hover:text-white' onClick={addSalary}>Add Salary</button>
-          <button className='border p-2' onClick={handleSeeHistory}>See History</button>
+          <button className='border rounded-md border-green-500 px-10 py-5 text-xl w-48 hover:bg-green-500 transition-colors hover:text-white' onClick={onOpenDepositModal}>Won</button>
+          <button className='border rounded-md border-red-500 px-10 py-5 text-xl w-48 hover:bg-red-500 transition-colors hover:text-white' onClick={onOpenWithdrawModal}>Loss</button>
+          <button className='border rounded-md border-blue-500 px-10 py-5 text-xl w-48 hover:bg-blue-500 transition-colors hover:text-white' onClick={addSalary}>Add Salary</button>
+          <a href="/history"><button className='border p-2 rounded-md'>See History</button></a>
+          <a href="/config">
+            <Icon as={BsGear} className="text-2xl"></Icon>
+          </a>
         </div>
       </div>
     </>

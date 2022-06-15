@@ -1,36 +1,26 @@
 import { Button, Input } from '@chakra-ui/react';
 import { useEffect, useState } from 'react';
-import { ToastContainer, toast } from 'react-toastify';
+import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { errorFillPaymentDayInput } from '../../../ErrorMessages';
+import LocalStorageRepository from '../../../Repositories/LocalstorageRepository';
 
 const QuestionDay = () => {
   const [paymentDay, setPaymentDay] = useState('');
   const paymentDayStorage = localStorage.getItem('paymentDay');
 
-  useEffect(() => {
+  useEffect((): any => {
     if (paymentDayStorage) {
-      window.location.href = '/index';
+      return window.location.href = '/index';
     }
   },[])
 
-  const errorMessage = () => {
-    toast.error('Please enter a date', {
-      position: "top-right",
-      autoClose: 5000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
-    });
-  };
-
-  const finishQuestions = () => {
+  const finishQuestions = async () => {
     if(paymentDay){
-      localStorage.setItem("paymentDay", paymentDay);
-      window.location.href = '/index';
+      await LocalStorageRepository.set('paymentDay', paymentDay);
+      return window.location.href = '/index';
     }else{
-      errorMessage();
+      errorFillPaymentDayInput();
     }
   } 
 
@@ -45,9 +35,7 @@ const QuestionDay = () => {
         </div>
       </div>
     </>
-    
   )
-
 }
 
 export default QuestionDay;

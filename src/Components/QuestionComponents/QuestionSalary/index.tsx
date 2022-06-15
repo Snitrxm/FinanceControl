@@ -1,28 +1,19 @@
 import { Button, Input } from '@chakra-ui/react';
 import { useState } from 'react';
-import { toast, ToastContainer } from 'react-toastify';
+import { ToastContainer } from 'react-toastify';
+import { errorFillSalaryInput } from '../../../ErrorMessages';
+import LocalStorageRepository from '../../../Repositories/LocalstorageRepository';
 
 const QuestionSalary = () => {
   const [salary, setSalary] = useState<string>('');
   const name = localStorage.getItem("name");
-  const errorMessage = () => {
-    toast.error('Please enter your salary', {
-      position: "top-right",
-      autoClose: 5000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
-    });
-  };
-
-  const handleNextQuestion = () => {
+  
+  const handleNextQuestion = async () => {
     if(salary){
-      localStorage.setItem("salary", salary);
+      await LocalStorageRepository.set("salary", salary);
       window.location.reload();
     }else{
-      errorMessage();
+      errorFillSalaryInput();
     }
   }
 
@@ -37,7 +28,6 @@ const QuestionSalary = () => {
         </div>
       </div>
     </>
-    
   );
 }
 

@@ -1,18 +1,19 @@
 import { Button } from '@chakra-ui/react';
+import LocalStorageRepository from '../../../Repositories/LocalstorageRepository';
 
 const QuestionType = () => {
-  const handleEconomizer = () => {
-    localStorage.setItem("type", "economizer");
+  const handleEconomizer = async () => {
+    await LocalStorageRepository.set("type", "economizer");
     window.location.reload();
   }
 
-  const handleModerate = () => {
-    localStorage.setItem("type", "moderate");
+  const handleModerate = async () => {
+    await LocalStorageRepository.set("type", "moderate");
     window.location.reload();
   }
 
-  const handleSpender = () => {
-    localStorage.setItem("type", "spender");
+  const handleSpender = async () => {
+    await LocalStorageRepository.set("type", "spender");
     window.location.reload();
   }
 
