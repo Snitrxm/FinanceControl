@@ -11,6 +11,7 @@ import { FiUser } from 'react-icons/fi';
 import { HiOutlineFolderAdd } from 'react-icons/hi';
 import { BiShoppingBag, BiMoney } from 'react-icons/bi';
 import { Navigate } from 'react-router-dom';
+import TransactionRepository from '../../Repositories/TransactionsRepository';
 
 const MainScreen = () => {
   const { isOpen: openDepositModal, onOpen: onOpenDepositModal, onClose: closeDepositModal } = useDisclosure();
@@ -29,6 +30,7 @@ const MainScreen = () => {
   const [withdraw, setWithdraw] = useState<string>('');
   const [withdrawType, setWithdrawType] = useState<string>('');
   const [money, setMoney] = useState<number>(0);
+  const [transactions, setTransactions] = useState<any[]>([]);
   
   useEffect(() => {
     const fetchData = async () => {
@@ -59,14 +61,22 @@ const MainScreen = () => {
       }
     }
     fetch();
-
-
-    // if(name && salary && type && paymentDay){
-      
-    // }else{
-    //   return <Navigate to="/"/>
-    // }
   },[name, salary, type, paymentDay, money])
+
+  useEffect(() => {
+    const getAllTransactionsByUser = async () => {
+      let user = await UserRepository.getUser(name as string);
+      const userId = user.data._id;
+      const transactionsData = await TransactionRepository.getAllByUser(userId);
+      transactionsData.data.map((transaction: any) => {
+        let date = transaction.createdAt.split("T")[0]
+        date = date.split("-").reverse().join("/")
+        transaction.createdAt = date
+      })
+      setTransactions(transactionsData.data);
+    }
+    getAllTransactionsByUser();
+  }, [deposit, money, depositType])
 
   const addSalary = () => {
     const salaryInt = parseInt(salary as any);
@@ -81,12 +91,10 @@ const MainScreen = () => {
     if(deposit){
       const depositInt = parseInt(deposit as any);
       setMoney(pastValue => pastValue + depositInt);
-      // const moneyInt = parseInt(money as any)
-      
-      // const total = moneyInt + depositInt
-      // localStorage.setItem("money", JSON.stringify(total));
-      // await addDoc(historyCollection, {money: depositInt, type: "WON", typeWork: depositType, user: name})
-      // window.location.reload();
+      const user = await UserRepository.getUser(name as string);
+      const userId = user.data._id;
+      const type = "WON";
+      await TransactionRepository.deposit(depositInt, type, depositType, userId);
     }else{
       errorMessageDeposit();
     }
@@ -96,7 +104,7 @@ const MainScreen = () => {
     if(withdraw){
       const withdrawInt = parseInt(withdraw as any)
       setMoney(pastValue => pastValue - withdrawInt);
-      // const moneyInt = parseInt(money as any)
+
       
       // const total = moneyInt - withdrawInt;
       // localStorage.setItem("money", JSON.stringify(total));
@@ -222,6 +230,28 @@ const MainScreen = () => {
                   <h1 className='font-bold text-sm'>Add Salary</h1>
                 </div>
               </button>
+            </div>
+            <div className='mt-10 flex flex-col gap-5'>
+              <h1 className="font-bold px-8 mb-5">Latest Transactions</h1>
+              {transactions.map((item) => (
+                <div>
+                  <div className='flex justify-between items-center'>
+                    <div className='ml-8'>
+                      <p className='text-sm text-slate-500'>{item.createdAt}</p>
+                      <p>{item.reason}</p>
+                    </div>
+                    <div className='mr-8'>
+                      {item.type === "WON" ? (
+                        <h1>U$ <span className='text-green-500'>{item.money}</span></h1>
+                      ): (
+                        <h1>U$ <span className='text-red-500'>{item.money}</span></h1>
+                      )}
+                  
+                    </div>
+                  </div>
+                  <hr className='mt-2 w-[90%] m-auto'/>
+                </div>
+              ))}
             </div>
           </div>
         </div>
