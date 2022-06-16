@@ -1,5 +1,5 @@
 import { Button, Input } from '@chakra-ui/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import UserRepository from '../../../Repositories/UserRepository';
@@ -10,6 +10,23 @@ import { errorFillNameInput } from '../../../ErrorMessages';
 
 const QuestionName = () => {
   const [name, setName ] = useState('');
+
+  useEffect(() => {
+    const name = localStorage.getItem("name");
+    const salary = localStorage.getItem("salary");
+    const type = localStorage.getItem("type");
+    const paymentDay = localStorage.getItem("paymentDay");
+    const money = localStorage.getItem("money");
+
+    if(name || salary || type || paymentDay || money) {
+      localStorage.removeItem("name");
+      localStorage.removeItem("salary");
+      localStorage.removeItem("type");
+      localStorage.removeItem("paymentDay");
+      localStorage.removeItem("money"); 
+      // Refator essa parte depois
+    }
+  },[])
   
   const handleNextQuestion = async () => {
     if(name){
