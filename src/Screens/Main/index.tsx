@@ -2,13 +2,15 @@ import {
   Button, Icon, Input, Modal, ModalBody,
   ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, useDisclosure
 } from '@chakra-ui/react';
-import { addDoc, collection } from '@firebase/firestore';
 import { useEffect, useState } from 'react';
-import { BsGear } from 'react-icons/bs';
 import { ToastContainer } from 'react-toastify';
-import { errorMessageDeposit, errorMessageWithdraw } from '../../ErrorMessages';
+import { errorMessageDeposit, errorMessageWithdraw, errorUserDontExists } from '../../ErrorMessages';
 import { db } from '../../firebaseConfig';
 import UserRepository from '../../Repositories/UserRepository';
+import { FiUser } from 'react-icons/fi';
+import { HiOutlineFolderAdd } from 'react-icons/hi';
+import { BiShoppingBag, BiMoney } from 'react-icons/bi';
+import { Navigate } from 'react-router-dom';
 
 const MainScreen = () => {
   const { isOpen: openDepositModal, onOpen: onOpenDepositModal, onClose: closeDepositModal } = useDisclosure();
@@ -18,7 +20,7 @@ const MainScreen = () => {
   const salary = localStorage.getItem("salary")
   const salaryInt = parseInt(salary as any)
   const type = localStorage.getItem("type")
-  const money: any = localStorage.getItem("money");
+  //const money: any = localStorage.getItem("money");
   const paymentDay = localStorage.getItem("paymentDay")
   const paymentDayInt = parseInt(paymentDay as any)
 
@@ -26,7 +28,7 @@ const MainScreen = () => {
   const [depositType, setDepositType] = useState<string>('');
   const [withdraw, setWithdraw] = useState<string>('');
   const [withdrawType, setWithdrawType] = useState<string>('');
-  const historyCollection = collection(db, 'transactions');
+  const [money, setMoney] = useState<number>(0);
   
   useEffect(() => {
     const fetchData = async () => {
@@ -35,44 +37,56 @@ const MainScreen = () => {
         console.log("Already in database!");
       }else{
         await UserRepository.createUser(name as string ,salaryInt as number, type as string, paymentDay as string);
+        console.log("User not in database, but created!");
       }
     }
     fetchData();
   },[])
 
-
   useEffect(() => {
-    if(money){
-      
-    }else{
-      localStorage.setItem("money", JSON.stringify(0));
+    const fetchMoney = async () => {
+      let user = await UserRepository.getUser(name as string);
+      return setMoney(user.data.money);
     }
-  }, [money])
+    fetchMoney();
+  }, [])
   
-  useEffect(() => {
-    if(name && salary && type && paymentDay){
-      
-    }else{
-      window.location.href = '/'
+  useEffect((): any => {
+    const fetch = async () => {
+      const user = await UserRepository.checkIfUserExists(name as string);
+      if(!user){
+        return <Navigate to="/"/>
+      }
     }
-  },[name, salary, type, paymentDay])
+    fetch();
+
+
+    // if(name && salary && type && paymentDay){
+      
+    // }else{
+    //   return <Navigate to="/"/>
+    // }
+  },[name, salary, type, paymentDay, money])
 
   const addSalary = () => {
-    const salaryInt = parseInt(salary as any)
-    const moneyInt = parseInt(money as any)
-    const total = moneyInt + salaryInt
-    localStorage.setItem("money", JSON.stringify(total));
-    window.location.reload();
+    const salaryInt = parseInt(salary as any);
+    setMoney(pastValue => pastValue + salaryInt);
+    // const moneyInt = parseInt(money as any)
+    // const total = moneyInt + salaryInt
+    // localStorage.setItem("money", JSON.stringify(total));
+    // window.location.reload();
   }
 
   const handleDeposit = async () => {
     if(deposit){
-      const moneyInt = parseInt(money as any)
-      const depositInt = parseInt(deposit as any)
-      const total = moneyInt + depositInt
-      localStorage.setItem("money", JSON.stringify(total));
-      await addDoc(historyCollection, {money: depositInt, type: "WON", typeWork: depositType, user: name})
-      window.location.reload();
+      const depositInt = parseInt(deposit as any);
+      setMoney(pastValue => pastValue + depositInt);
+      // const moneyInt = parseInt(money as any)
+      
+      // const total = moneyInt + depositInt
+      // localStorage.setItem("money", JSON.stringify(total));
+      // await addDoc(historyCollection, {money: depositInt, type: "WON", typeWork: depositType, user: name})
+      // window.location.reload();
     }else{
       errorMessageDeposit();
     }
@@ -80,16 +94,28 @@ const MainScreen = () => {
 
   const handleWithdraw = async () => {
     if(withdraw){
-      const moneyInt = parseInt(money as any)
       const withdrawInt = parseInt(withdraw as any)
-      const total = moneyInt - withdrawInt;
-      localStorage.setItem("money", JSON.stringify(total));
-      await addDoc(historyCollection, {money: withdrawInt, type: "LOSS", typeWork: withdrawType, user: name})
-      window.location.reload();
+      setMoney(pastValue => pastValue - withdrawInt);
+      // const moneyInt = parseInt(money as any)
+      
+      // const total = moneyInt - withdrawInt;
+      // localStorage.setItem("money", JSON.stringify(total));
+      // await addDoc(historyCollection, {money: withdrawInt, type: "LOSS", typeWork: withdrawType, user: name})
+      // window.location.reload();
     }else{
       errorMessageWithdraw();
     }
   }
+
+  useEffect(() => {
+    const syncMoneyInDatabase = async () => {
+      const user = await UserRepository.getUser(name as string);
+      if(user.data){
+        await UserRepository.syncMoney(user.data._id, money);
+      }
+    }
+    syncMoneyInDatabase();
+  }, [money])
 
   return (
     <>
@@ -144,20 +170,62 @@ const MainScreen = () => {
         </ModalContent>
       </Modal>
 
-      <div>
-        <nav className='bg-green-500 h-24 flex justify-center items-center'>
-          <h1 className='text-white text-2xl font-bold'>I Have { money } U$</h1>
-        </nav>
-        <div className='flex flex-col items-center mt-10 gap-8'>
-          <button className='border rounded-md border-green-500 px-10 py-5 text-xl w-48 hover:bg-green-500 transition-colors hover:text-white' onClick={onOpenDepositModal}>Won</button>
-          <button className='border rounded-md border-red-500 px-10 py-5 text-xl w-48 hover:bg-red-500 transition-colors hover:text-white' onClick={onOpenWithdrawModal}>Loss</button>
-          <button className='border rounded-md border-blue-500 px-10 py-5 text-xl w-48 hover:bg-blue-500 transition-colors hover:text-white' onClick={addSalary}>Add Salary</button>
-          <a href="/history"><button className='border p-2 rounded-md'>See History</button></a>
+      <div className=''>
+        <nav className='bg-purple-500 h-28 flex justify-between md:justify-center md:gap-96'>
+          <h1 className='text-white text-lg font-bold m-4 mt-7 md'>Hey { name } </h1>
           <a href="/config">
-            <Icon as={BsGear} className="text-2xl"></Icon>
+            <div className='m-4 mt-6 bg-slate-200 h-11 w-11 rounded-full flex justify-center items-center'>
+              <Icon as={FiUser} className=" text-lg cursor-pointer"></Icon>
+            </div>
           </a>
+        </nav>
+        <div className='flex flex-col items-center'>
+          <div className='bg-white absolute top-[5rem] w-4/5 h-20 rounded-sm shadow-md flex justify-between md:w-1/5'>
+            <div className='m-4'>
+              <p className='text-gray-700'>Balance</p>
+              <div className='flex items-center gap-2'>
+                <p className='text-sm text-gray-700'>U$</p>
+                <span className='text-green-500 text-md'>{ money }</span>
+              </div>
+            </div>
+            <div className='mr-12 mt-4'>
+              <p>Spending</p>
+              <div className='flex items-center gap-2'>
+                <p className='text-sm text-gray-700'>U$</p>
+                <span className='text-red-500 text-md'> -200</span>
+              </div>
+            </div>
+          </div>
+          <div className='bg-slate-50 w-full h-[calc(100vh-112px)]'>
+            <div className='mt-20 flex justify-center gap-10'>
+              <button onClick={onOpenDepositModal}>
+                <div className='flex flex-col items-center gap-1'>
+                  <div className='bg-slate-200 h-16 w-16 rounded-full flex justify-center items-center cursor-pointer'>
+                    <Icon as={HiOutlineFolderAdd} className="text-xl"></Icon>
+                  </div>
+                  <h1 className='font-bold text-sm'>Deposit</h1>
+                </div>
+              </button>
+              <button onClick={onOpenWithdrawModal}>
+                <div className='flex flex-col items-center gap-1'>
+                  <div className='bg-slate-200 h-16 w-16 rounded-full flex justify-center items-center cursor-pointer'>
+                    <Icon as={BiShoppingBag} className="text-xl"></Icon>
+                  </div>
+                  <h1 className='font-bold text-sm'>Shopping</h1>
+                </div>
+              </button>
+              <button onClick={addSalary}>
+                <div className='flex flex-col items-center gap-1'>
+                  <div className='bg-slate-200 h-16 w-16 rounded-full flex justify-center items-center cursor-pointer'>
+                    <Icon as={BiMoney} className="text-xl"></Icon>
+                  </div>
+                  <h1 className='font-bold text-sm'>Add Salary</h1>
+                </div>
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
+        </div>
     </>
     
   );
