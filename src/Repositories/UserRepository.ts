@@ -6,6 +6,8 @@ interface IUserRepository {
   createUser(name: string, salary: number, type: string, paymentDay: string): Promise<any>
   deleteUser(_id: string): Promise<any>
   syncMoney(_id:string, money: number): Promise<any>
+  syncMoneySpending(_id: string, moneySpending: number): Promise<any>
+  changeSalary(_id: string, salary: number): Promise<any>
 }
 
 const UserRepository: IUserRepository = {
@@ -14,6 +16,8 @@ const UserRepository: IUserRepository = {
   createUser: (name: string, salary: number, type: string, paymentDay: string): Promise<any> => Api.post('/user/createuser', { name, salary, type, paymentDay }),
   deleteUser: (_id: string): Promise<any> => Api.delete('/user/deleteuser', { data: { _id } }),
   syncMoney: (_id: string, money:number): Promise<any> => Api.post('/user/syncmoney', { _id, money }),
+  syncMoneySpending: (_id: string, moneySpending:number): Promise<any> => Api.post('/user/syncmoneyspending', { _id, moneySpending }),
+  changeSalary: (_id: string, salary: number): Promise<any> => Api.put('/user/changesalary', { _id, salary }),
 }
 
 export default UserRepository;

@@ -5,4 +5,5 @@
 
 *{
   font-family: 'Work Sans', sans-serif;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
 }

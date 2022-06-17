@@ -3,60 +3,69 @@ import {
   Button,
   Input, Modal, ModalBody,
   ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay,
-  useDisclosure
+  useDisclosure, Icon, RadioGroup, Stack
 } from '@chakra-ui/react';
 import { useEffect, useState } from 'react';
-import { NewSalaryService } from "../../Services/NewSalaryService";
-import { DeleteUserAccountService } from "../../Services/DeleteUserAccountService";
 import { successMessageChangeSalary } from "../../SuccessMessages";
 import { errorMessageChangeSalary } from "../../ErrorMessages";
 import { ToastContainer } from "react-toastify";
-import { db } from "../../firebaseConfig";
-import { collection, onSnapshot, doc, query, where, deleteDoc } from '@firebase/firestore';
 import UserRepository from "../../Repositories/UserRepository";
 import LocalStorageRepository from "../../Repositories/LocalstorageRepository";
-
+import { FaExchangeAlt} from 'react-icons/fa';
+import { BsTrash } from 'react-icons/bs';
+import { errorDeletingUser } from '../../ErrorMessages';
+import TransactionRepository from "../../Repositories/TransactionsRepository";
+import { BsCoin } from 'react-icons/bs'
+import { Radio } from "flowbite-react";
 
 const ConfigScreen = () => {
   const [newSalary, setNewSalary] = useState<string>('');
+  const [nameConfirm, setNameConfirm] = useState<string>('');
+  const [coinType, setCoinType] = useState<string>('');
 
   const { isOpen: openNewSalaryModal, onOpen: onOpenNewSalarytModal, onClose: closeNewSalaryModal } = useDisclosure();
+  const { isOpen: openDeleteModal, onOpen: onOpenDeletetModal, onClose: closeDeleteModal } = useDisclosure();
+  const { isOpen: openCoinTypeModal, onOpen: onOpenCoinTypetModal, onClose: closeCoinTypeModal } = useDisclosure();
 
   const name = localStorage.getItem("name");
-  const salary = localStorage.getItem("salary");
-  const type = localStorage.getItem("type");
-  const paymentDay = localStorage.getItem("paymentDay");
-  const money = localStorage.getItem("money");
+  
 
-  useEffect(() => {
-    if(!name || !salary || !type || !paymentDay || !money) {
-      window.location.href = "/";
-    }
-  },[])
-
-  let newSalaryService = new NewSalaryService();
 
   const handleChangeSalaray = async () => {
-    const response = await newSalaryService.execute({
-      newSalary: newSalary,
-    })
-    if(response === true){
-      successMessageChangeSalary();
-    }else{
-      errorMessageChangeSalary();
+    const user = await UserRepository.getUser(name as string);
+    if(newSalary && newSalary !== user.data.salary && newSalary !== ''){
+      const newSalaryInt = parseInt(newSalary);
+      const response = await UserRepository.changeSalary(user.data._id as string, newSalaryInt as number);
+      if(response.data === true){
+        await LocalStorageRepository.set("salary", newSalary);
+        successMessageChangeSalary();
+      }else{
+        errorMessageChangeSalary();
+      }
     }
+    setNewSalary("");
   }
 
   const handleDeleteUserAccount = async () => {
-    const user = await UserRepository.getUser(name as string);
-    await UserRepository.deleteUser(user.data._id);
-    await LocalStorageRepository.delete("name", "salary", "type", "paymentDay", "money");
-    window.location.reload();
+    if(nameConfirm && nameConfirm === name){
+      let user = await UserRepository.getUser(name as string);
+      await UserRepository.deleteUser(user.data._id);
+      await TransactionRepository.deleteAllTransactionByUser(user.data._id);
+      await LocalStorageRepository.delete("name", "salary", "type", "paymentDay");
+      window.location.href = "/";
+    }else{
+      errorDeletingUser();
+    }
+    setNameConfirm("");
+  }
+
+  const handleChangeCoinType = async () => {
+    console.log(coinType);
   }
 
   return (
     <>
-      <Modal isOpen={openNewSalaryModal} onClose={closeNewSalaryModal} size="sm">
+      <Modal isOpen={openNewSalaryModal} onClose={closeNewSalaryModal} size="xs">
         <ModalOverlay />
         <ModalContent>
           <ModalHeader>How much is your new salary?</ModalHeader>
@@ -69,7 +78,47 @@ const ConfigScreen = () => {
               closeNewSalaryModal();
               handleChangeSalaray();
             }}>
-              Withdraw
+              Change Salary
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      <Modal isOpen={openDeleteModal} onClose={closeDeleteModal} size="xs">
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Please write <span className="font-light">{ name }</span> to confirm</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <Input placeholder="Name" onChange={(nameConfirm) => setNameConfirm(nameConfirm.target.value)} value={nameConfirm}></Input>
+          </ModalBody>
+          <ModalFooter>
+            <Button colorScheme='red' mr={3} onClick={() => {
+              closeDeleteModal();
+              handleDeleteUserAccount();
+            }}>
+              Delete Account
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      <Modal isOpen={openCoinTypeModal} onClose={closeCoinTypeModal} size="xs">
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>How much is your new salary?</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <RadioGroup value={coinType} onChange={setCoinType} name="coinType">
+              <p>In Procution...</p>
+            </RadioGroup>
+          </ModalBody>
+          <ModalFooter>
+            <Button colorScheme='whatsapp' mr={3} onClick={() => {
+              closeCoinTypeModal();
+              handleChangeCoinType();
+            }}>
+              Change Coin Type
             </Button>
           </ModalFooter>
         </ModalContent>
@@ -77,7 +126,7 @@ const ConfigScreen = () => {
 
       <ToastContainer></ToastContainer>
       <div>
-        <nav className="bg-green-500 h-24 flex justify-center items-center">
+        <nav className="bg-purple-500 h-28 flex justify-center items-center">
           <h1 className="text-white font-bold text-2xl">Hello, { name }</h1>
         </nav>
         <div className="m-5">
@@ -86,8 +135,30 @@ const ConfigScreen = () => {
           </a>
         </div>
         <div className="flex flex-col items-center mt-10 gap-10">
-          <button className='border rounded-md border-blue-500 px-15 py-5 text-lg w-48 hover:bg-blue-500 transition-colors hover:text-white' onClick={onOpenNewSalarytModal}>Change Salary</button>
-          <button className='border rounded-md border-red-500 px-15 py-5 text-lg w-48 hover:bg-red-500 transition-colors hover:text-white' onClick={handleDeleteUserAccount}>Delete Account</button>
+          <button onClick={onOpenNewSalarytModal}>
+              <div className='flex flex-col items-center gap-1'>
+                <div className='bg-slate-200 h-16 w-16 rounded-full flex justify-center items-center cursor-pointer'>
+                  <Icon as={FaExchangeAlt}></Icon>
+                </div>
+                <h1 className='font-bold text-sm'>Change Salary</h1>
+              </div>
+          </button>
+          <button onClick={onOpenCoinTypetModal}>
+              <div className='flex flex-col items-center gap-1'>
+                <div className='bg-slate-200 h-16 w-16 rounded-full flex justify-center items-center cursor-pointer'>
+                  <Icon as={BsCoin}></Icon>
+                </div>
+                <h1 className='font-bold text-sm'>Change Coin Type</h1>
+              </div>
+          </button>
+          <button onClick={onOpenDeletetModal}>
+              <div className='flex flex-col items-center gap-1'>
+                <div className='bg-slate-200 h-16 w-16 rounded-full flex justify-center items-center cursor-pointer'>
+                  <Icon as={BsTrash}></Icon>
+                </div>
+                <h1 className='font-bold text-sm'>Delete Account</h1>
+              </div>
+          </button>
         </div>
       </div>
     </>

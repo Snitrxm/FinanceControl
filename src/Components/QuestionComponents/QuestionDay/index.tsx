@@ -16,7 +16,9 @@ const QuestionDay = () => {
   },[])
 
   const finishQuestions = async () => {
-    if(paymentDay){
+    const paymentDayInt = parseInt(paymentDay);
+
+    if(paymentDay && paymentDayInt > 0 && paymentDayInt < 31){
       await LocalStorageRepository.set('paymentDay', paymentDay);
       return window.location.href = '/index';
     }else{

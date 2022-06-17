@@ -4,8 +4,7 @@ import {
 } from '@chakra-ui/react';
 import { useEffect, useState } from 'react';
 import { ToastContainer } from 'react-toastify';
-import { errorMessageDeposit, errorMessageWithdraw, errorUserDontExists } from '../../ErrorMessages';
-import { db } from '../../firebaseConfig';
+import { errorMessageDeposit, errorMessageWithdraw } from '../../ErrorMessages';
 import UserRepository from '../../Repositories/UserRepository';
 import { FiUser } from 'react-icons/fi';
 import { HiOutlineFolderAdd } from 'react-icons/hi';
@@ -21,15 +20,14 @@ const MainScreen = () => {
   const salary = localStorage.getItem("salary")
   const salaryInt = parseInt(salary as any)
   const type = localStorage.getItem("type")
-  //const money: any = localStorage.getItem("money");
   const paymentDay = localStorage.getItem("paymentDay")
-  const paymentDayInt = parseInt(paymentDay as any)
 
   const [deposit, setDeposit] = useState<string>('');
   const [depositType, setDepositType] = useState<string>('');
   const [withdraw, setWithdraw] = useState<string>('');
   const [withdrawType, setWithdrawType] = useState<string>('');
   const [money, setMoney] = useState<number>(0);
+  const [moneySpending, setMoneySpending] = useState<number>(0);
   const [transactions, setTransactions] = useState<any[]>([]);
   
   useEffect(() => {
@@ -39,7 +37,7 @@ const MainScreen = () => {
         console.log("Already in database!");
       }else{
         await UserRepository.createUser(name as string ,salaryInt as number, type as string, paymentDay as string);
-        console.log("User not in database, but created!");
+        console.log("User not in database yet, creating...");
       }
     }
     fetchData();
@@ -48,7 +46,8 @@ const MainScreen = () => {
   useEffect(() => {
     const fetchMoney = async () => {
       let user = await UserRepository.getUser(name as string);
-      return setMoney(user.data.money);
+      setMoney(user.data.money);
+      setMoneySpending(user.data.moneySpending);
     }
     fetchMoney();
   }, [])
@@ -71,45 +70,48 @@ const MainScreen = () => {
       transactionsData.data.map((transaction: any) => {
         let date = transaction.createdAt.split("T")[0]
         date = date.split("-").reverse().join("/")
-        transaction.createdAt = date
+        transaction.createdAt = date;
+        return 0;
       })
       setTransactions(transactionsData.data);
     }
     getAllTransactionsByUser();
-  }, [deposit, money, depositType])
+  }, [money, name])
 
-  const addSalary = () => {
+  const addSalary = async () => {
     const salaryInt = parseInt(salary as any);
     setMoney(pastValue => pastValue + salaryInt);
-    // const moneyInt = parseInt(money as any)
-    // const total = moneyInt + salaryInt
-    // localStorage.setItem("money", JSON.stringify(total));
-    // window.location.reload();
+    const user = await UserRepository.getUser(name as string);
+    const userId = user.data._id;
+    await TransactionRepository.deposit(salaryInt, "WON", "Salary", userId);
   }
 
   const handleDeposit = async () => {
-    if(deposit){
+    if(deposit && depositType){
       const depositInt = parseInt(deposit as any);
       setMoney(pastValue => pastValue + depositInt);
       const user = await UserRepository.getUser(name as string);
       const userId = user.data._id;
       const type = "WON";
       await TransactionRepository.deposit(depositInt, type, depositType, userId);
+      setDeposit("");
+      setDepositType("");
     }else{
       errorMessageDeposit();
     }
   }
 
   const handleWithdraw = async () => {
-    if(withdraw){
+    if(withdraw && withdrawType){
       const withdrawInt = parseInt(withdraw as any)
       setMoney(pastValue => pastValue - withdrawInt);
-
-      
-      // const total = moneyInt - withdrawInt;
-      // localStorage.setItem("money", JSON.stringify(total));
-      // await addDoc(historyCollection, {money: withdrawInt, type: "LOSS", typeWork: withdrawType, user: name})
-      // window.location.reload();
+      setMoneySpending(pastValue => pastValue + withdrawInt);
+      const user = await UserRepository.getUser(name as string);
+      const userId = user.data._id;
+      const type = "LOSS";
+      await TransactionRepository.deposit(withdrawInt, type, withdrawType, userId);
+      setWithdraw("");
+      setWithdrawType("");
     }else{
       errorMessageWithdraw();
     }
@@ -120,6 +122,7 @@ const MainScreen = () => {
       const user = await UserRepository.getUser(name as string);
       if(user.data){
         await UserRepository.syncMoney(user.data._id, money);
+        await UserRepository.syncMoneySpending(user.data._id, moneySpending);
       }
     }
     syncMoneyInDatabase();
@@ -128,7 +131,7 @@ const MainScreen = () => {
   return (
     <>
     <ToastContainer></ToastContainer>
-    <Modal isOpen={openDepositModal} onClose={closeDepositModal} size="sm">
+    <Modal isOpen={openDepositModal} onClose={closeDepositModal} size="xs">
         <ModalOverlay />
         <ModalContent>
           <ModalHeader>How Much you won?</ModalHeader>
@@ -153,7 +156,7 @@ const MainScreen = () => {
         </ModalContent>
       </Modal>
 
-      <Modal isOpen={openWithdrawModal} onClose={closeWithdrawModal} size="sm">
+      <Modal isOpen={openWithdrawModal} onClose={closeWithdrawModal} size="xs">
         <ModalOverlay />
         <ModalContent>
           <ModalHeader>How Much you loss?</ModalHeader>
@@ -193,14 +196,18 @@ const MainScreen = () => {
               <p className='text-gray-700'>Balance</p>
               <div className='flex items-center gap-2'>
                 <p className='text-sm text-gray-700'>U$</p>
-                <span className='text-green-500 text-md'>{ money }</span>
+                {money >= 0 ? (
+                  <span className='text-green-500 text-md'>{ money }</span>
+                ) : (
+                  <span className='text-red-500 text-md'>{ money }</span>
+                )}
               </div>
             </div>
             <div className='mr-12 mt-4'>
               <p>Spending</p>
               <div className='flex items-center gap-2'>
                 <p className='text-sm text-gray-700'>U$</p>
-                <span className='text-red-500 text-md'> -200</span>
+                <span className='text-red-500 text-md'> -{ moneySpending }</span>
               </div>
             </div>
           </div>
@@ -231,7 +238,7 @@ const MainScreen = () => {
                 </div>
               </button>
             </div>
-            <div className='mt-10 flex flex-col gap-5'>
+            <div className='mt-10 flex flex-col gap-5 md:w-1/5 md:m-auto md:mt-11'>
               <h1 className="font-bold px-8 mb-5">Latest Transactions</h1>
               {transactions.map((item) => (
                 <div>
