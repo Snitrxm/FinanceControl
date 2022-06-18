@@ -4,15 +4,12 @@ import {
 } from '@chakra-ui/react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ToastContainer } from 'react-toastify';
 import { errorMessageDeposit, errorMessageWithdraw } from '../../ErrorMessages';
 import UserRepository from '../../Repositories/UserRepository';
 import { FiUser } from 'react-icons/fi';
 import { HiOutlineFolderAdd } from 'react-icons/hi';
 import { BiShoppingBag, BiMoney } from 'react-icons/bi';
-import { Navigate } from 'react-router-dom';
 import TransactionRepository from '../../Repositories/TransactionsRepository';
-import LocalStorageRepository from '../../Repositories/LocalstorageRepository';
 
 const MainScreen = () => {
   const { isOpen: openDepositModal, onOpen: onOpenDepositModal, onClose: closeDepositModal } = useDisclosure();
@@ -23,7 +20,6 @@ const MainScreen = () => {
   const salaryInt = parseInt(salary as string);
   const type = localStorage.getItem("type")
   const paymentDay = localStorage.getItem("paymentDay")
-  const paymentDayInt = parseInt(paymentDay as string);
   const coinType = localStorage.getItem("coinType")
 
   const [deposit, setDeposit] = useState<string>('');
@@ -33,7 +29,6 @@ const MainScreen = () => {
   const [money, setMoney] = useState<number>(0);
   const [moneySpending, setMoneySpending] = useState<number>(0);
   const [transactions, setTransactions] = useState<any[]>([]);
-  const [counter, setCounter ] = useState<number>(0);
   const [getPaymented, setGetPayement] = useState<boolean>(false);
   const navigation = useNavigate();
 
@@ -52,7 +47,6 @@ const MainScreen = () => {
           document.cookie = user.data._id;
           console.log("User not in database yet, creating...");
         }
-        
       }
     }
     fetchData();
@@ -63,19 +57,18 @@ const MainScreen = () => {
       let user = await UserRepository.getUser(name as string);
       setMoney(user.data.money);
       setMoneySpending(user.data.moneySpending);
-      console.log("A")
     }
     fetchMoney();
   }, [getPaymented, name])
   
-  useEffect((): any => {
-    const fetch = async () => {
+  useEffect((): void => {
+    const fetchCheckUser = async () => {
       const user = await UserRepository.checkIfUserExists(name as string);
       if(!user){
-        return <Navigate to="/"/>
+        navigation('/');
       }
     }
-    fetch();
+    fetchCheckUser();
   },[name, salary, type, paymentDay, money])
 
   useEffect(() => {

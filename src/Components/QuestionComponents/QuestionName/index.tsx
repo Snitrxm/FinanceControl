@@ -1,6 +1,5 @@
 import { Button, Input } from '@chakra-ui/react';
 import { useState, useEffect } from 'react';
-import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import UserRepository from '../../../Repositories/UserRepository';
 import LocalStorageRepository from '../../../Repositories/LocalstorageRepository';
@@ -18,14 +17,13 @@ const QuestionName = () => {
     const paymentDay = localStorage.getItem("paymentDay");
     const money = localStorage.getItem("money");
 
-    if(name || salary || type || paymentDay || money) {
-      localStorage.removeItem("name");
-      localStorage.removeItem("salary");
-      localStorage.removeItem("type");
-      localStorage.removeItem("paymentDay");
-      localStorage.removeItem("money"); 
-      // Refator essa parte depois
+    const deleteLocalStorage = async () => {
+      if(name || salary || type || paymentDay || money) {
+        await LocalStorageRepository.delete("name", "salary", "type", "paymentDay", "money");
+        console.log("Deleted from localStorage!")
+      }
     }
+    deleteLocalStorage();
   },[])
   
   const handleNextQuestion = async () => {
@@ -49,6 +47,7 @@ const QuestionName = () => {
           <h1 className="font-bold text-2xl">What's your name?</h1> 
           <Input placeholder='Andre' onChange={name => setName(name.target.value)} value={name}></Input>
           <Button colorScheme="purple" onClick={handleNextQuestion}>Next Question</Button>
+          <p>Already have a account? <a href="/login" className='underline'>Log In</a></p>
         </div>
       </div>
     </> 

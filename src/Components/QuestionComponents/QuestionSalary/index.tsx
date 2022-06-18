@@ -1,6 +1,5 @@
 import { Button, Input } from '@chakra-ui/react';
 import { useState } from 'react';
-import { ToastContainer } from 'react-toastify';
 import { errorFillSalaryInput } from '../../../ErrorMessages';
 import LocalStorageRepository from '../../../Repositories/LocalstorageRepository';
 
@@ -19,7 +18,6 @@ const QuestionSalary = () => {
 
   return (
     <>
-      <ToastContainer></ToastContainer>
       <div className="h-screen w-full flex justify-center items-center">
         <div className="text-center border rounded-md p-5 flex flex-col gap-10">
           <h1 className="font-bold text-2xl">Okay { name }, <br/>What's your salary?</h1>

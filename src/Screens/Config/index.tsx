@@ -3,12 +3,11 @@ import {
   Button,
   Input, Modal, ModalBody,
   ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay,
-  useDisclosure, Icon, RadioGroup
+  useDisclosure, Icon
 } from '@chakra-ui/react';
 import { useState } from 'react';
 import { successChangeCoinType, successDeleteUser, successMessageChangeSalary, successMessageResetBalance } from "../../SuccessMessages";
 import { errorMessageChangeSalary, errorResetBalance } from "../../ErrorMessages";
-import { ToastContainer } from "react-toastify";
 import UserRepository from "../../Repositories/UserRepository";
 import LocalStorageRepository from "../../Repositories/LocalstorageRepository";
 import { FaExchangeAlt} from 'react-icons/fa';
@@ -19,6 +18,8 @@ import { BsCoin } from 'react-icons/bs'
 import { GrPowerReset } from 'react-icons/gr'
 import { useNavigate } from "react-router-dom";
 import { ChangeCoinTypeService } from "../../Services/ChangeCoinTypeService";
+import { BiLogOut } from "react-icons/bi";
+import LogOutUserService from "../../Services/LogOutUserService";
 
 const ConfigScreen = () => {
   const [newSalary, setNewSalary] = useState<string>('');
@@ -29,6 +30,7 @@ const ConfigScreen = () => {
   const { isOpen: openDeleteModal, onOpen: onOpenDeletetModal, onClose: closeDeleteModal } = useDisclosure();
   const { isOpen: openCoinTypeModal, onOpen: onOpenCoinTypetModal, onClose: closeCoinTypeModal } = useDisclosure();
   const { isOpen: openResetBalanceModal, onOpen: onOpenResetBalanceModal, onClose: closeResetBalanceModal } = useDisclosure();
+  const { isOpen: openLogOutModal, onOpen: onOpenLogOutModal, onClose: closeLogOutModal } = useDisclosure();
 
   const name = localStorage.getItem("name");
 
@@ -83,6 +85,11 @@ const ConfigScreen = () => {
     }else{
       errorResetBalance();
     }
+  }
+
+  const handleLogOut = async () => {
+    await LogOutUserService.execute();
+    navigation('/')
   }
 
   return (
@@ -174,6 +181,27 @@ const ConfigScreen = () => {
         </ModalContent>
       </Modal>
 
+      <Modal isOpen={openLogOutModal} onClose={closeLogOutModal} size="xs">
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Are you sure to logout?</ModalHeader>
+          <ModalCloseButton />
+          <ModalFooter>
+            <Button colorScheme='red' mr={3} onClick={() => {
+              closeLogOutModal();
+            }}>
+              No
+            </Button>
+            <Button colorScheme='whatsapp' mr={3} onClick={() => {
+              closeLogOutModal();
+              handleLogOut();
+            }}>
+              Yes
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
       
       <div>
         <nav className="bg-purple-500 h-28 flex justify-center items-center">
@@ -207,6 +235,14 @@ const ConfigScreen = () => {
                   <Icon as={GrPowerReset}></Icon>
                 </div>
                 <h1 className='font-bold text-sm'>Reset Balance</h1>
+              </div>
+          </button>
+          <button onClick={onOpenLogOutModal}>
+              <div className='flex flex-col items-center gap-1'>
+                <div className='bg-slate-200 h-16 w-16 rounded-full flex justify-center items-center cursor-pointer'>
+                  <Icon as={BiLogOut}></Icon>
+                </div>
+                <h1 className='font-bold text-sm'>Log Out</h1>
               </div>
           </button>
           <button onClick={onOpenDeletetModal}>

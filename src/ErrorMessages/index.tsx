@@ -86,7 +86,7 @@ export const errorFillPaymentDayInput = () => {
 };
 
 export const errorUserDontExists = () => {
-  toast.error('User dont exists, please reload the page', {
+  toast.error('User dont exists...', {
     position: "top-right",
     autoClose: 5000,
     hideProgressBar: false,
@@ -111,6 +111,31 @@ export const errorDeletingUser = () => {
 
 export const errorResetBalance = () => {
   toast.error('Error reseting balance', {
+    position: "top-right",
+    autoClose: 5000,
+    hideProgressBar: false,
+    closeOnClick: true,
+    pauseOnHover: true,
+    draggable: true,
+    progress: undefined,
+  });
+};
+
+
+export const errorFillLoginInput = () => {
+  toast.error('Please enter your name and salary to login', {
+    position: "top-right",
+    autoClose: 5000,
+    hideProgressBar: false,
+    closeOnClick: true,
+    pauseOnHover: true,
+    draggable: true,
+    progress: undefined,
+  });
+};
+
+export const errorSalaryIsIncorrect = () => {
+  toast.error('Salary is incorrect!', {
     position: "top-right",
     autoClose: 5000,
     hideProgressBar: false,

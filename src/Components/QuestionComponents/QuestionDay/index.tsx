@@ -1,17 +1,18 @@
 import { Button, Input } from '@chakra-ui/react';
 import { useEffect, useState } from 'react';
-import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { errorFillPaymentDayInput } from '../../../ErrorMessages';
 import LocalStorageRepository from '../../../Repositories/LocalstorageRepository';
+import { useNavigate } from 'react-router-dom';
 
 const QuestionDay = () => {
   const [paymentDay, setPaymentDay] = useState('');
   const paymentDayStorage = localStorage.getItem('paymentDay');
+  const navigation = useNavigate();
 
-  useEffect((): any => {
+  useEffect((): void => {
     if (paymentDayStorage) {
-      return window.location.href = '/index';
+      navigation('/index');
     }
   },[])
 
@@ -20,7 +21,7 @@ const QuestionDay = () => {
 
     if(paymentDay && paymentDayInt > 0 && paymentDayInt < 31){
       await LocalStorageRepository.set('paymentDay', paymentDay);
-      return window.location.href = '/index';
+      navigation('/index');
     }else{
       errorFillPaymentDayInput();
     }
@@ -28,7 +29,6 @@ const QuestionDay = () => {
 
   return (
     <>
-      <ToastContainer></ToastContainer>
       <div className="h-screen w-full flex justify-center items-center">
         <div className="text-center border rounded-md p-5 flex flex-col gap-10">
           <h1 className="font-bold text-2xl">What's the day of<br/> your payment?</h1>
