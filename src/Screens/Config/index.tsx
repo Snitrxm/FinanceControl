@@ -6,7 +6,7 @@ import {
   useDisclosure, Icon, RadioGroup
 } from '@chakra-ui/react';
 import { useState } from 'react';
-import { successMessageChangeSalary, successMessageResetBalance } from "../../SuccessMessages";
+import { successChangeCoinType, successDeleteUser, successMessageChangeSalary, successMessageResetBalance } from "../../SuccessMessages";
 import { errorMessageChangeSalary, errorResetBalance } from "../../ErrorMessages";
 import { ToastContainer } from "react-toastify";
 import UserRepository from "../../Repositories/UserRepository";
@@ -17,11 +17,13 @@ import { errorDeletingUser } from '../../ErrorMessages';
 import TransactionRepository from "../../Repositories/TransactionsRepository";
 import { BsCoin } from 'react-icons/bs'
 import { GrPowerReset } from 'react-icons/gr'
+import { useNavigate } from "react-router-dom";
+import { ChangeCoinTypeService } from "../../Services/ChangeCoinTypeService";
 
 const ConfigScreen = () => {
   const [newSalary, setNewSalary] = useState<string>('');
   const [nameConfirm, setNameConfirm] = useState<string>('');
-  const [coinType, setCoinType] = useState<string>('');
+  const navigation = useNavigate();
 
   const { isOpen: openNewSalaryModal, onOpen: onOpenNewSalarytModal, onClose: closeNewSalaryModal } = useDisclosure();
   const { isOpen: openDeleteModal, onOpen: onOpenDeletetModal, onClose: closeDeleteModal } = useDisclosure();
@@ -29,9 +31,13 @@ const ConfigScreen = () => {
   const { isOpen: openResetBalanceModal, onOpen: onOpenResetBalanceModal, onClose: closeResetBalanceModal } = useDisclosure();
 
   const name = localStorage.getItem("name");
+
+  const [selectedRadioBtn, setSelectRadioBtn] = useState<string>('radio1');
+
+  const isRadioSelect = (value: string): boolean => selectedRadioBtn === value;
+
+  const handleRadioClick = (e: React.ChangeEvent<HTMLInputElement>): void => setSelectRadioBtn(e.currentTarget.value);
   
-
-
   const handleChangeSalaray = async () => {
     const user = await UserRepository.getUser(name as string);
     if(newSalary && newSalary !== user.data.salary && newSalary !== ''){
@@ -53,7 +59,8 @@ const ConfigScreen = () => {
       await UserRepository.deleteUser(user.data._id);
       await TransactionRepository.deleteAllTransactionByUser(user.data._id);
       await LocalStorageRepository.delete("name", "salary", "type", "paymentDay");
-      window.location.href = "/";
+      successDeleteUser();
+      navigation('/');
     }else{
       errorDeletingUser();
     }
@@ -61,7 +68,10 @@ const ConfigScreen = () => {
   }
 
   const handleChangeCoinType = async () => {
-    console.log(coinType);
+    const res = await ChangeCoinTypeService.execute(selectedRadioBtn as string);
+    if(res === true){
+      successChangeCoinType(selectedRadioBtn as string);
+    }
   }
 
   const handleResetBalance = async () => {
@@ -121,9 +131,16 @@ const ConfigScreen = () => {
           <ModalHeader>What type of coin you will chose?</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
-            <RadioGroup value={coinType} onChange={setCoinType} name="coinType">
-              <p>In Procution...</p>
-            </RadioGroup>
+            <div>
+              <div className="flex items-center gap-2">
+                <input type="radio" name="coinType" value="U$" checked={isRadioSelect('U$')} onChange={handleRadioClick}/>
+                <p>U$</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <input type="radio" name="coinType" value="R$" checked={isRadioSelect('R$')} onChange={handleRadioClick}/>
+                <p>R$</p>
+              </div>
+            </div>
           </ModalBody>
           <ModalFooter>
             <Button colorScheme='whatsapp' mr={3} onClick={() => {
@@ -157,7 +174,7 @@ const ConfigScreen = () => {
         </ModalContent>
       </Modal>
 
-      <ToastContainer></ToastContainer>
+      
       <div>
         <nav className="bg-purple-500 h-28 flex justify-center items-center">
           <h1 className="text-white font-bold text-2xl">Hello, { name }</h1>

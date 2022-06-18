@@ -3,6 +3,7 @@ import {
   ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, useDisclosure
 } from '@chakra-ui/react';
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import { errorMessageDeposit, errorMessageWithdraw } from '../../ErrorMessages';
 import UserRepository from '../../Repositories/UserRepository';
@@ -22,7 +23,8 @@ const MainScreen = () => {
   const salaryInt = parseInt(salary as string);
   const type = localStorage.getItem("type")
   const paymentDay = localStorage.getItem("paymentDay")
-  const paymentDayInt = parseInt(paymentDay as string)
+  const paymentDayInt = parseInt(paymentDay as string);
+  const coinType = localStorage.getItem("coinType")
 
   const [deposit, setDeposit] = useState<string>('');
   const [depositType, setDepositType] = useState<string>('');
@@ -33,9 +35,8 @@ const MainScreen = () => {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [counter, setCounter ] = useState<number>(0);
   const [getPaymented, setGetPayement] = useState<boolean>(false);
+  const navigation = useNavigate();
 
-  
-  
   useEffect(() => {
     const fetchData = async () => {
       const userExist = await UserRepository.checkIfUserExists(name as string);
@@ -45,7 +46,7 @@ const MainScreen = () => {
         if(!name || !salary || !type || !paymentDay){
           await UserRepository.deleteUser(document.cookie);
           await TransactionRepository.deleteAllTransactionByUser(document.cookie);
-          window.location.href = "/";
+          navigation('/');
         }else{
           const user = await UserRepository.createUser(name as string ,salaryInt as number, type as string, paymentDay as string);
           document.cookie = user.data._id;
@@ -168,7 +169,6 @@ const MainScreen = () => {
 
   return (
     <>
-    <ToastContainer></ToastContainer>
     <Modal isOpen={openDepositModal} onClose={closeDepositModal} size="xs">
         <ModalOverlay />
         <ModalContent>
@@ -233,7 +233,7 @@ const MainScreen = () => {
             <div className='m-4'>
               <p className='text-gray-700'>Balance</p>
               <div className='flex items-center gap-2'>
-                <p className='text-sm text-gray-700'>U$</p>
+                <p className='text-sm text-gray-700'>{coinType ? coinType : "U$"}</p>
                 {money >= 0 ? (
                   <span className='text-green-500 text-md'>{ money }</span>
                 ) : (
@@ -244,7 +244,7 @@ const MainScreen = () => {
             <div className='mr-12 mt-4'>
               <p>Spending</p>
               <div className='flex items-center gap-2'>
-                <p className='text-sm text-gray-700'>U$</p>
+                <p className='text-sm text-gray-700'>{coinType ? coinType : "U$"}</p>
                 <span className='text-red-500 text-md'> -{ moneySpending }</span>
               </div>
             </div>
@@ -287,9 +287,9 @@ const MainScreen = () => {
                     </div>
                     <div className='mr-8'>
                       {item.type === "WON" ? (
-                        <h1>U$ <span className='text-green-500'>{item.money}</span></h1>
+                        <h1>{coinType ? coinType : "U$"} <span className='text-green-500'>{item.money}</span></h1>
                       ): (
-                        <h1>U$ <span className='text-red-500'>{item.money}</span></h1>
+                        <h1>{coinType ? coinType : "U$"} <span className='text-red-500'>{item.money}</span></h1>
                       )}
                     </div>
                   </div>

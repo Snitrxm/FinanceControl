@@ -44,7 +44,6 @@ const QuestionName = () => {
 
   return (
     <>
-      <ToastContainer></ToastContainer>
       <div className="h-screen w-full flex justify-center items-center">
         <div className="text-center border rounded-md p-5 flex flex-col gap-10">
           <h1 className="font-bold text-2xl">What's your name?</h1> 
