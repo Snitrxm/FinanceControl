@@ -290,6 +290,9 @@ const MainScreen = () => {
                 </div>
               ))}
             </div>
+            <footer className='absolute bottom-1 md:bottom-4 w-full text-center'>
+              <small>Made By <a href="https://twitter.com/Snitrxxm" className='text-blue-500' target="_blank" rel="noopener noreferrer">@snitrxxm</a></small>
+            </footer>
           </div>
         </div>
         </div>
