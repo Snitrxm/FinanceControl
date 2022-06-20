@@ -20,10 +20,12 @@ import { useNavigate } from "react-router-dom";
 import { ChangeCoinTypeService } from "../../Services/ChangeCoinTypeService";
 import { BiLogOut } from "react-icons/bi";
 import LogOutUserService from "../../Services/LogOutUserService";
+import Loader from "../../Components/Loader";
 
 const ConfigScreen = () => {
   const [newSalary, setNewSalary] = useState<string>('');
   const [nameConfirm, setNameConfirm] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
   const navigation = useNavigate();
 
   const { isOpen: openNewSalaryModal, onOpen: onOpenNewSalarytModal, onClose: closeNewSalaryModal } = useDisclosure();
@@ -41,10 +43,12 @@ const ConfigScreen = () => {
   const handleRadioClick = (e: React.ChangeEvent<HTMLInputElement>): void => setSelectRadioBtn(e.currentTarget.value);
   
   const handleChangeSalaray = async () => {
+    setLoading(true);
     const user = await UserRepository.getUser(name as string);
     if(newSalary && newSalary !== user.data.salary && newSalary !== ''){
       const newSalaryInt = parseInt(newSalary);
       const response = await UserRepository.changeSalary(user.data._id as string, newSalaryInt as number);
+      setLoading(false);
       if(response.data === true){
         await LocalStorageRepository.set("salary", newSalary);
         successMessageChangeSalary();
@@ -57,10 +61,12 @@ const ConfigScreen = () => {
 
   const handleDeleteUserAccount = async () => {
     if(nameConfirm && nameConfirm === name){
+      setLoading(true);
       let user = await UserRepository.getUser(name as string);
       await UserRepository.deleteUser(user.data._id);
       await TransactionRepository.deleteAllTransactionByUser(user.data._id);
       await LocalStorageRepository.delete("name", "salary", "type", "paymentDay");
+      setLoading(false);
       successDeleteUser();
       navigation('/');
     }else{
@@ -70,16 +76,20 @@ const ConfigScreen = () => {
   }
 
   const handleChangeCoinType = async () => {
+    setLoading(true);
     const res = await ChangeCoinTypeService.execute(selectedRadioBtn as string);
+    setLoading(false);
     if(res === true){
       successChangeCoinType(selectedRadioBtn as string);
     }
   }
 
   const handleResetBalance = async () => {
+    setLoading(true);
     const user = await UserRepository.getUser(name as string);
     const response = await UserRepository.resetBalance(user.data._id as string);
     await TransactionRepository.deleteAllTransactionByUser(user.data._id as string);
+    setLoading(false)
     if(response.data){
       successMessageResetBalance();
     }else{
@@ -90,6 +100,10 @@ const ConfigScreen = () => {
   const handleLogOut = async () => {
     await LogOutUserService.execute();
     navigation('/')
+  }
+
+  const handleGotoIndexPage = () => {
+    navigation('/index');
   }
 
   return (
@@ -202,17 +216,15 @@ const ConfigScreen = () => {
         </ModalContent>
       </Modal>
 
-      
+      {loading === true ? <Loader /> : null}
       <div>
         <nav className="bg-purple-500 h-28 flex justify-center items-center">
           <h1 className="text-white font-bold text-2xl">Hello, { name }</h1>
         </nav>
         <div className="m-5">
-          <a href="/index">
-            <ArrowBackIcon className='text-xl'></ArrowBackIcon>
-          </a>
+          <ArrowBackIcon className='text-xl' onClick={handleGotoIndexPage}></ArrowBackIcon>
         </div>
-        <div className="flex flex-col items-center mt-10 gap-10">
+        <div className="flex flex-col items-center mt-10 gap-10 h-[calc(100vh-82px)]">
           <button onClick={onOpenNewSalarytModal}>
               <div className='flex flex-col items-center gap-1'>
                 <div className='bg-slate-200 h-16 w-16 rounded-full flex justify-center items-center cursor-pointer'>

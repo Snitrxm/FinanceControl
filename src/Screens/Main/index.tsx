@@ -10,6 +10,8 @@ import { FiUser } from 'react-icons/fi';
 import { HiOutlineFolderAdd } from 'react-icons/hi';
 import { BiShoppingBag, BiMoney } from 'react-icons/bi';
 import TransactionRepository from '../../Repositories/TransactionsRepository';
+import { VscGraphLine } from 'react-icons/vsc'; 
+import Loader from '../../Components/Loader';
 
 const MainScreen = () => {
   const { isOpen: openDepositModal, onOpen: onOpenDepositModal, onClose: closeDepositModal } = useDisclosure();
@@ -29,7 +31,6 @@ const MainScreen = () => {
   const [money, setMoney] = useState<number>(0);
   const [moneySpending, setMoneySpending] = useState<number>(0);
   const [transactions, setTransactions] = useState<any[]>([]);
-  const [getPaymented, setGetPayement] = useState<boolean>(false);
   const navigation = useNavigate();
 
   useEffect(() => {
@@ -57,9 +58,10 @@ const MainScreen = () => {
       let user = await UserRepository.getUser(name as string);
       setMoney(user.data.money);
       setMoneySpending(user.data.moneySpending);
+      console.log("Setou money!");
     }
     fetchMoney();
-  }, [getPaymented, name])
+  },[name]);
   
   useEffect((): void => {
     const fetchCheckUser = async () => {
@@ -82,6 +84,7 @@ const MainScreen = () => {
         transaction.createdAt = date;
         return 0;
       })
+      transactionsData.data.reverse();
       setTransactions(transactionsData.data);
     }
     getAllTransactionsByUser();
@@ -160,6 +163,14 @@ const MainScreen = () => {
     syncMoneyInDatabase();
   }, [money])
 
+  const handleGotoInvestmentsPage = () => {
+    navigation('/investments');
+  }
+
+  const handleGotoConfigPage = () => {
+    navigation('/config');
+  }
+
   return (
     <>
     <Modal isOpen={openDepositModal} onClose={closeDepositModal} size="xs">
@@ -211,15 +222,13 @@ const MainScreen = () => {
           </ModalFooter>
         </ModalContent>
       </Modal>
-
+        
       <div className=''>
         <nav className='bg-purple-500 h-28 flex justify-between md:justify-center md:gap-96'>
           <h1 className='text-white text-lg font-bold m-4 mt-7 md'>Hey { name } </h1>
-          <a href="/config">
-            <div className='m-4 mt-6 bg-slate-200 h-11 w-11 rounded-full flex justify-center items-center'>
-              <Icon as={FiUser} className=" text-lg cursor-pointer"></Icon>
-            </div>
-          </a>
+          <div className='m-4 mt-6 bg-slate-200 h-11 w-11 rounded-full flex justify-center items-center'>
+            <Icon as={FiUser} className=" text-lg cursor-pointer" onClick={handleGotoConfigPage}></Icon>
+          </div>
         </nav>
         <div className='flex flex-col items-center'>
           <div className='bg-white absolute top-[5rem] w-4/5 h-20 rounded-sm shadow-md flex justify-between md:w-1/5'>
@@ -242,8 +251,8 @@ const MainScreen = () => {
               </div>
             </div>
           </div>
-          <div className='bg-slate-50 w-full h-[calc(100vh-112px)]'>
-            <div className='mt-20 flex justify-center gap-10'>
+          <div className='bg-slate-50 w-full h-screen'>
+            <div className='mt-20 flex justify-center gap-7'>
               <button onClick={onOpenDepositModal}>
                 <div className='flex flex-col items-center gap-1'>
                   <div className='bg-slate-200 h-16 w-16 rounded-full flex justify-center items-center cursor-pointer'>
@@ -268,6 +277,12 @@ const MainScreen = () => {
                   <h1 className='font-bold text-sm'>Add Salary</h1>
                 </div>
               </button>
+              <div className='flex flex-col items-center gap-1'>
+                <div className='bg-slate-200 h-16 w-16 rounded-full flex justify-center items-center cursor-pointer'>
+                  <Icon as={VscGraphLine} className="text-xl" onClick={handleGotoInvestmentsPage}></Icon>
+                </div>
+                <h1 className='font-bold text-sm'>Investmests</h1>
+              </div>
             </div>
             <div className='mt-10 flex flex-col gap-5 md:w-1/5 md:m-auto md:mt-11'>
               <h1 className="font-bold px-8 mb-5">Latest Transactions</h1>
